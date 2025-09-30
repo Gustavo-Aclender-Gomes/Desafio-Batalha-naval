@@ -2,88 +2,120 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define TAMANHO_TABULEIRO 5
-#define TOTAL_NAVIOS 3
+#define TAM 10
+#define NAVIO 3
+#define VAZIO 0
 
-typedef struct {
-    int x;
-    int y;
-} Coordenada;
-
-void inicializarTabuleiro(char tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]);
-void mostrarTabuleiro(char tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]);
-int jogar(char tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO], Coordenada navios[TOTAL_NAVIOS]);
-int verificarAcerto(Coordenada tiro, Coordenada navios[TOTAL_NAVIOS]);
-
-int main() {
-    char tabuleiroJogador[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO];
-    Coordenada naviosJogador[TOTAL_NAVIOS];
-    srand(time(NULL));
-
-    inicializarTabuleiro(tabuleiroJogador);
-    
-    // Coloca navios aleatoriamente
-    for (int i = 0; i < TOTAL_NAVIOS; i++) {
-        naviosJogador[i].x = rand() % TAMANHO_TABULEIRO;
-        naviosJogador[i].y = rand() % TAMANHO_TABULEIRO;
-    }
-
-    printf("Jogo Batalha Naval!\n");
-
-    int acertos = 0;
-    while (acertos < TOTAL_NAVIOS) {
-        mostrarTabuleiro(tabuleiroJogador);
-
-        Coordenada tiro;
-        printf("Informe a coordenada do tiro (linha e coluna): ");
-        scanf("%d %d", &tiro.x, &tiro.y);
-
-        if (tiro.x < 0 || tiro.x >= TAMANHO_TABULEIRO || tiro.y < 0 || tiro.y >= TAMANHO_TABULEIRO) {
-            printf("Coordenada inválida. Tente novamente.\n");
-            continue;
-        }
-
-        if (verificarAcerto(tiro, naviosJogador)) {
-            tabuleiroJogador[tiro.x][tiro.y] = 'X';
-            printf("Acertou um navio!\n");
-            acertos++;
-        } else {
-            tabuleiroJogador[tiro.x][tiro.y] = 'O';
-            printf("Errou! Tente novamente.\n");
-        }
-    }
-
-    printf("Parabéns! Você afundou todos os navios!\n");
-
-    return 0;
-}
-
-void inicializarTabuleiro(char tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
-    for (int i = 0; i < TAMANHO_TABULEIRO; i++) {
-        for (int j = 0; j < TAMANHO_TABULEIRO; j++) {
-            tabuleiro[i][j] = '~';  // Representa água
+// Função para inicializar o tabuleiro
+void inicializarTabuleiro(int tabuleiro[TAM][TAM]) {
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+            tabuleiro[i][j] = VAZIO;
         }
     }
 }
 
-void mostrarTabuleiro(char tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
-    printf("\nTabuleiro de Batalha:\n");
-    printf("   0 1 2 3 4\n");
-    for (int i = 0; i < TAMANHO_TABULEIRO; i++) {
-        printf("%d ", i);
-        for (int j = 0; j < TAMANHO_TABULEIRO; j++) {
-            printf("%c ", tabuleiro[i][j]);
+// Função para exibir o tabuleiro completo
+void mostrarTabuleiro(int tabuleiro[TAM][TAM]) {
+    printf("   ");
+    for (int i = 0; i < TAM; i++) {
+        printf("%2d ", i);
+    }
+    printf("\n");
+
+    for (int i = 0; i < TAM; i++) {
+        printf("%2d ", i);
+        for (int j = 0; j < TAM; j++) {
+            printf(" %d ", tabuleiro[i][j]);
         }
         printf("\n");
     }
     printf("\n");
 }
 
-int verificarAcerto(Coordenada tiro, Coordenada navios[TOTAL_NAVIOS]) {
-    for (int i = 0; i < TOTAL_NAVIOS; i++) {
-        if (tiro.x == navios[i].x && tiro.y == navios[i].y) {
-            return 1; // Acerto
+// Função para posicionar navios na horizontal ou vertical
+void posicionarNavioReto(int tabuleiro[TAM][TAM]) {
+    int linha, coluna, orientacao;
+    int tamanho = 3;
+
+    do {
+        linha = rand() % TAM;
+        coluna = rand() % TAM;
+        orientacao = rand() % 2; // 0 = horizontal, 1 = vertical
+
+        int valido = 1;
+
+        for (int i = 0; i < tamanho; i++) {
+            int x = linha + (orientacao == 1 ? i : 0);
+            int y = coluna + (orientacao == 0 ? i : 0);
+            if (x >= TAM || y >= TAM || tabuleiro[x][y] != VAZIO) {
+                valido = 0;
+                break;
+            }
         }
-    }
-    return 0; // Erro
+
+        if (valido) {
+            for (int i = 0; i < tamanho; i++) {
+                int x = linha + (orientacao == 1 ? i : 0);
+                int y = coluna + (orientacao == 0 ? i : 0);
+                tabuleiro[x][y] = NAVIO;
+            }
+            break;
+        }
+
+    } while (1);
+}
+
+// Função para posicionar navios na diagonal
+void posicionarNavioDiagonal(int tabuleiro[TAM][TAM]) {
+    int linha, coluna, direcao;
+    int tamanho = 3;
+
+    do {
+        linha = rand() % TAM;
+        coluna = rand() % TAM;
+        direcao = rand() % 2; // 0 = \ , 1 = /
+
+        int valido = 1;
+
+        for (int i = 0; i < tamanho; i++) {
+            int x = linha + i;
+            int y = (direcao == 0) ? (coluna + i) : (coluna - i);
+
+            if (x >= TAM || y < 0 || y >= TAM || tabuleiro[x][y] != VAZIO) {
+                valido = 0;
+                break;
+            }
+        }
+
+        if (valido) {
+            for (int i = 0; i < tamanho; i++) {
+                int x = linha + i;
+                int y = (direcao == 0) ? (coluna + i) : (coluna - i);
+                tabuleiro[x][y] = NAVIO;
+            }
+            break;
+        }
+
+    } while (1);
+}
+
+int main() {
+    int tabuleiro[TAM][TAM];
+    srand(time(NULL));
+
+    inicializarTabuleiro(tabuleiro);
+
+    // Posiciona 2 navios retos (horizontal ou vertical)
+    posicionarNavioReto(tabuleiro);
+    posicionarNavioReto(tabuleiro);
+
+    // Posiciona 2 navios diagonais (\ ou /)
+    posicionarNavioDiagonal(tabuleiro);
+    posicionarNavioDiagonal(tabuleiro);
+
+    // Mostra o tabuleiro completo com os navios
+    mostrarTabuleiro(tabuleiro);
+
+    return 0;
 }
